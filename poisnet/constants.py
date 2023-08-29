@@ -4,12 +4,12 @@ Collection of constants used by all modules.
 
 
 # Modify the following paths to point to the location where the datasets are stored
-base_path = ""
-ctu13_base_pth = f"{base_path}/ctu-13"
-cicids_base_pth = f"{base_path}/cic-ids-2018"
+base_path = "/net/data/netpois/data_out"
+ctu13_base_pth = f"{base_path}/ctu13_neris"
+cicids_base_pth = f"{base_path}/cic-ids-2018-botnet"
 iscx_base_pth = {
-    "file_video": f"{base_path}/ISCXVPN/NonVPN/file_video/",
-    "chat_video": f"{base_path}/ISCXVPN/NonVPN/chat_video/",
+    "file_video": f"{base_path}/iscxvpn//NonVPN/file_video/",
+    "chat_video": f"{base_path}/iscxvpn//NonVPN/chat_video/",
 }
 
 ctu13_res_pth = f"{ctu13_base_pth}/supervised/results"
@@ -79,4 +79,11 @@ internal_prefix = {
         "file_video": ("131.202",),
         "chat_video": ("131.202",),
     },
+}
+
+botnet_ips_neris = {
+    '1_42':  ['147.32.84.165'],
+    '2_43': ['147.32.84.165'],
+    '9_50': ['147.32.84.165', '147.32.84.191', '147.32.84.192', '147.32.84.193', '147.32.84.204',
+             '147.32.84.205', '147.32.84.206', '147.32.84.207', '147.32.84.208', '147.32.84.209']
 }

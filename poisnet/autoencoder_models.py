@@ -18,7 +18,7 @@ from sklearn.metrics import (
     f1_score,
 )
 
-from netpois import constants, ctu_utils
+from poisnet import constants, ctu_utils
 
 
 class AutoEncoderModel(Model):

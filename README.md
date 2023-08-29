@@ -1,4 +1,4 @@
-# Netpois
+# Poisnet
 
 Code for the paper: Poisoning Network Flow Classifiers, ACSAC 2023
 

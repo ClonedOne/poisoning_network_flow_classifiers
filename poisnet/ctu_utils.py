@@ -10,10 +10,31 @@ from typing import List, Tuple
 from multiprocessing import Pool
 from collections import OrderedDict
 
-from netpois.ctu13_botnet_detection.src import config_neris
-from netpois.ctu13_botnet_detection.src.aggregated_features_bro_logs import (
-    construct_header,
-)
+from poisnet import constants
+
+OTHER_PORT = -1
+KNOWN_PORTS = [
+    1,
+    3,
+    8,
+    10,
+    21,
+    22,
+    25,
+    53,
+    80,
+    110,
+    123,
+    135,
+    138,
+    161,
+    443,
+    445,
+    993,
+    OTHER_PORT,
+]
+STAT_FEATURES_NUM = 31
+PORTS_NUM = len(KNOWN_PORTS)
 
 
 def find_internal_ip(tc: pd.DataFrame):
@@ -296,7 +317,6 @@ def vectorize_by_IP(
     return trn_x, trn_y, tst_x, tst_y
 
 
-
 def ports_to_known(resp_ports: np.ndarray) -> np.ndarray:
     """Replace ports with a known port if they are not in the list of known ports
 
@@ -307,27 +327,6 @@ def ports_to_known(resp_ports: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: array of ports
     """
-    OTHER_PORT = -1
-    KNOWN_PORTS = [
-        1,
-        3,
-        8,
-        10,
-        21,
-        22,
-        25,
-        53,
-        80,
-        110,
-        123,
-        135,
-        138,
-        161,
-        443,
-        445,
-        993,
-        OTHER_PORT,
-    ]
 
     return np.where(np.isin(resp_ports, KNOWN_PORTS), resp_ports, OTHER_PORT)
 
@@ -346,7 +345,7 @@ def label_conn_log(identifier: str, cl: pd.DataFrame) -> pd.DataFrame:
     dst_ip = cl["id.resp_h"]
     assert len(src_ip) == len(dst_ip)
     n_entries = len(src_ip)
-    set_ips = set(config_neris.BOTNET_IPS[identifier])
+    set_ips = set(constants.botnet_ips_neris[identifier])
 
     labels = [
         1 if src_ip.iloc[i] in set_ips or dst_ip.iloc[i] in set_ips else 0
@@ -460,29 +459,7 @@ def aggregate_feats_for_subset(subset: pd.DataFrame, window: int = 30) -> pd.Dat
     Returns:
         pd.DataFrame: extracted aggregated features
     """
-    intip = config_neris.INTERNAL
-    OTHER_PORT = -1
-    KNOWN_PORTS = [
-        1,
-        3,
-        8,
-        10,
-        21,
-        22,
-        25,
-        53,
-        80,
-        110,
-        123,
-        135,
-        138,
-        161,
-        443,
-        445,
-        993,
-        OTHER_PORT,
-    ]
-    STAT_FEATURES_NUM = 31
+    intip = constants.internal_prefix[constants.neris_tag]
 
     aggregate_t = None
     dict_for_window = {}
@@ -677,3 +654,117 @@ def aggregate_feats_for_subset(subset: pd.DataFrame, window: int = 30) -> pd.Dat
     to_df = pd.DataFrame.from_dict(dict(zip(cols, output_line)), orient="index")
 
     return to_df
+
+
+# From: https://github.com/tongun/ctu13-botnet-detection/blob/main/src/aggregated_features_bro_logs.py
+def construct_header():
+    header_src = [  # for internal src_ip
+        "bytes_in_sum_s",
+        "bytes_in_min_s",
+        "bytes_in_max_s",
+        "bytes_out_sum_s",
+        "bytes_out_min_s",
+        "bytes_out_max_s",
+        "pkts_in_sum_s",
+        "pkts_in_min_s",
+        "pkts_in_max_s",
+        "pkts_out_sum_s",
+        "pkts_out_min_s",
+        "pkts_out_max_s",
+        "duration_sum_s",
+        "duration_min_s",
+        "duration_max_s",
+        # In V2 we used the sum of bytes per protocol
+        #  'tcp_sum_s', 'udp_sum_s', 'icmp_sum_s',
+        # In V3 we use the number of connections per protocol
+        "tcp_count_s",
+        "udp_count_s",
+        "icmp_count_s",
+        # Adding features for each state in:
+        # [S0, S1, SF, REJ, S2, S3, RSTO, RSTR, RSTOS0, RSTRH, SH, SHR, OTH]
+        "state_S0_s",
+        "state_S1_s",
+        "state_SF_s",
+        "state_REJ_s",
+        "state_S2_s",
+        "state_S3_s",
+        "state_RSTO_s",
+        "state_RSTR_s",
+        "state_RSTOS0_s",
+        "state_RSTRH_s",
+        "state_SH_s",
+        "state_SHR_s",
+        "state_OTH_s",
+        "distinct_external_ips_s",
+        "distinct_src_port_s",
+        "distinct_dst_port_s",
+    ]
+
+    header_dst = [  # for internal dst_ip
+        "bytes_in_sum_d",
+        "bytes_in_min_d",
+        "bytes_in_max_d",
+        "bytes_out_sum_d",
+        "bytes_out_min_d",
+        "bytes_out_max_d",
+        "pkts_in_sum_d",
+        "pkts_in_min_d",
+        "pkts_in_max_d",
+        "pkts_out_sum_d",
+        "pkts_out_min_d",
+        "pkts_out_max_d",
+        "duration_sum_d",
+        "duration_min_d",
+        "duration_max_d",
+        # In V2 we used the sum of bytes per protocol
+        #  'tcp_sum_d', 'udp_sum_d', 'icmp_sum_d',
+        # In V3 we use the number of connections per protocol
+        "tcp_count_d",
+        "udp_count_d",
+        "icmp_count_d",
+        # Adding features for each state in:
+        # [S0, S1, SF, REJ, S2, S3, RSTO, RSTR, RSTOS0, RSTRH, SH, SHR, OTH]
+        "state_S0_d",
+        "state_S1_d",
+        "state_SF_d",
+        "state_REJ_d",
+        "state_S2_d",
+        "state_S3_d",
+        "state_RSTO_d",
+        "state_RSTR_d",
+        "state_RSTOS0_d",
+        "state_RSTRH_d",
+        "state_SH_d",
+        "state_SHR_d",
+        "state_OTH_d",
+        "distinct_external_ips_d",
+        "distinct_src_port_d",
+        "distinct_dst_port_d",
+    ]
+    assert len(header_dst) == len(header_src)
+    assert len(header_dst) == STAT_FEATURES_NUM + 3
+    header_end = ["label", "window_timestamp", "internal_ip"]
+
+    # Adding a header column to keep track of the row numbers included in each window
+    header_end.append("original_rows")
+
+    header = []
+    for i in range(PORTS_NUM):
+        hs = append_port_to_feature_names(header_src, KNOWN_PORTS[i])
+        header.extend(hs)
+
+        hd = append_port_to_feature_names(header_dst, KNOWN_PORTS[i])
+        header.extend(hd)
+
+    header.extend(header_end)
+    # print(len(header))
+    return header
+
+
+def append_port_to_feature_names(names_list, port):
+    ret = []
+    for name in names_list:
+        if port == -1:
+            port = "OTHER"
+        ret.append(name + "_" + str(port))
+    return ret
