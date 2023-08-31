@@ -430,6 +430,8 @@ def attack(
         trig_dest,
     ) = mimicry_utils.find_all_internal_ip_in_subset(trigger.values)
 
+    trigger.to_csv(os.path.join(poison_pth, "trigger.csv"), index=False)
+
     # Injecting the trigger
     target_idxs = {
         tc: np.where(all_labels[tc] == target_class)[0] for tc in train_captures
